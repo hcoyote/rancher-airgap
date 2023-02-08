@@ -1,0 +1,19 @@
+- name: Deploy RKE2
+  hosts: all
+  become: yes
+  vars:
+    rke2_servers_group_name: leaders
+    rke2_airgap_mode: true
+    rke2_airgap_implementation: download
+    rke2_cni:
+      - multus
+      - calico
+    rke2_artifact:
+      - sha256sum-{{ rke2_architecture }}.txt
+      - rke2.linux-{{ rke2_architecture }}.tar.gz
+      - rke2-images.linux-{{ rke2_architecture }}.tar.zst
+      - rke2-images-multus.linux-{{ rke2_architecture }}.tar.zst
+      - rke2-images-calico.linux-{{ rke2_architecture }}.tar.zst
+  roles:
+     - role: lablabs.rke2
+
