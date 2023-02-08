@@ -134,6 +134,17 @@ resource "aws_security_group" "node_sec_group" {
   }
 
   egress {
+    description = "allow outbound to docker registry"
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = ["44.196.175.70/32",
+      "52.3.144.121/32",
+      "54.165.156.197/32",
+    ]
+  }
+
+  egress {
     description = "allow explicit https to github.com"
     from_port   = 443 
     to_port     = 443
