@@ -117,6 +117,19 @@ variable "leader_nodes" {
   default     = "3"
 }
 
+variable "leader_nodes_root_size" {
+  description = "Size in GB (default=100) of /dev/root for leader nodes"
+  type        = number
+  default     = 100
+}
+
+
+variable "worker_nodes_root_size" {
+  description = "Size in GB (default=100) of /dev/root for worker nodes"
+  type        = number
+  default     = 100
+}
+
 variable "prometheus_instance_type" {
   description = "Instant type of the prometheus/grafana node"
   default     = "c5.2xlarge"

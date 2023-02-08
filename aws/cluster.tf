@@ -29,7 +29,7 @@ resource "aws_instance" "leader" {
   )
 
   root_block_device {
-    volume_size = 100
+    volume_size = var.leader_nodes_root_size
   }
   connection {
     user        = var.distro_ssh_user[var.distro]
@@ -55,6 +55,9 @@ resource "aws_instance" "worker" {
     }
   )
 
+  root_block_device {
+    volume_size = var.worker_nodes_root_size
+  }
   connection {
     user        = var.distro_ssh_user[var.distro]
     host        = self.public_ip
