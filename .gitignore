@@ -9,6 +9,7 @@
 ansible/playbooks/grafana_dashboards/redpanda-grafana.json
 ansible/playbooks/tls/ca
 ansible/playbooks/tls/certs
+ansible/.requirements.yml.last_run
 hosts.ini
 .DS_Store
 .idea/*
