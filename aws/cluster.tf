@@ -109,6 +109,16 @@ resource "aws_security_group" "node_sec_group" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
+  
+  # HTTP access from anywhere to port 6443
+  ingress {
+    description = "rancher manager ui"
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
   # from anything to anything within the security group
   ingress {
     description = "from anything to anything within the security group"
