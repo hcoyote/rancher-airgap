@@ -5,10 +5,10 @@ default:
 	@grep '^# Target:' Makefile | sed -e 's/^# Target: //'
 
 # Target: play - run playbook
-play:
+play: galaxy
 	ansible-playbook -i hosts.ini -v ansible/playbooks/rancher-airgap.yml	 --diff
 
-vplay: 
+vplay:  galaxy
 	ansible-playbook -i hosts.ini -vv ansible/playbooks/rancher-airgap.yml	
 
 galaxy: ansible/.requirements.yml.last_run
