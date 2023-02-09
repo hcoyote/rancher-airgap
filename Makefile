@@ -6,7 +6,7 @@ default:
 
 # Target: play - run playbook
 play:
-	ansible-playbook -i hosts.ini -v ansible/playbooks/rancher-airgap.yml	
+	ansible-playbook -i hosts.ini -v ansible/playbooks/rancher-airgap.yml	 --diff
 
 vplay: 
 	ansible-playbook -i hosts.ini -vv ansible/playbooks/rancher-airgap.yml	
