@@ -147,6 +147,31 @@ resource "aws_security_group" "node_sec_group" {
   }
 
   egress {
+    description = "allow outbound to get.helm.sh"
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = ["152.195.19.97/32"]
+  }
+
+  egress {
+    description = "allow outbound to ubuntu mirror repos"
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = var.ubuntu_cidrs
+  }
+  egress {
+    description = "allow outbound to ubuntu mirror repos"
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = var.ubuntu_cidrs
+  }
+
+
+
+  egress {
     description = "allow outbound to docker registry"
     from_port   = 443
     to_port     = 443
