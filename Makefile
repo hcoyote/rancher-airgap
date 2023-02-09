@@ -17,11 +17,14 @@ rke_local_artifacts:
 	ls -l local_artifacts
 
 # Target: tf-apply - run the terraform
-tf-apply:
+tf-apply: test-aws-access
 	cd aws && terraform apply
 
-tf-destroy:
+tf-destroy: test-aws-access
 	cd aws && terraform apply -destroy
+
+test-aws-access:
+	 @aws sts get-caller-identity --no-cli-pager --output text >/dev/null 2>&1 || (echo "No valid aws identity, try aws sso login first"; exit 1)
 
 # Target: clean - clean everything
 clean: clean_rke_local_artifacts
