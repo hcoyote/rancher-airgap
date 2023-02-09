@@ -1,3 +1,5 @@
+.PHONY: galaxy
+
 default: 
 	@echo "Makefile Help:\n\n"; 
 	@grep '^# Target:' Makefile | sed -e 's/^# Target: //'
@@ -8,7 +10,13 @@ play:
 
 vplay: 
 	ansible-playbook -i hosts.ini -vv ansible/playbooks/rancher-airgap.yml	
+
+galaxy: ansible/.requirements.yml.last_run
+
+ansible/.requirements.yml.last_run: ansible/requirements.yml
+	ansible-galaxy install -r ansible/requirements.yml  && touch ansible/.requirements.yml.last_run
 	
+
 
 # Target: rke_local_artifacts - try to download rke artifacts for a copy-mode airgap install
 rke_local_artifacts:
