@@ -6,8 +6,9 @@ default:
 play:
 	ansible-playbook -i hosts.ini -v ansible/playbooks/rancher-airgap.yml	
 
-vplay:
-	ANSIBLE_VERBOSE=2 make play
+vplay: 
+	ansible-playbook -i hosts.ini -vv ansible/playbooks/rancher-airgap.yml	
+	
 
 # Target: rke_local_artifacts - try to download rke artifacts for a copy-mode airgap install
 rke_local_artifacts:
