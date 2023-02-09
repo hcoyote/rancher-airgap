@@ -17,3 +17,9 @@
   roles:
      - role: lablabs.rke2
 
+
+- name: Install Helm
+  hosts: all
+  become: yes
+  roles:
+     - role: gantsign.helm
