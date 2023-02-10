@@ -1,5 +1,7 @@
 - name: Deploy RKE2
-  hosts: all
+  hosts: 
+    - leader
+    - worker
   become: yes
   vars:
     rke2_servers_group_name: leaders
@@ -20,7 +22,9 @@
 
 
 - name: Install Helm
-  hosts: all
+  hosts: 
+    - leader
+    - worker
   become: yes
   roles:
      - role: gantsign.helm
