@@ -114,7 +114,7 @@ variable "machine_architecture" {
 variable "leader_nodes" {
   description = "The number of nodes to deploy"
   type        = number
-  default     = "3"
+  default     = "1"
 }
 
 variable "leader_nodes_root_size" {
@@ -126,6 +126,22 @@ variable "leader_nodes_root_size" {
 
 variable "worker_nodes_root_size" {
   description = "Size in GB (default=100) of /dev/root for worker nodes"
+  type        = number
+  default     = 100
+}
+
+variable "proxy_instance_type" {
+  description = "Default redpanda instance type to create"
+  default     = "t3a.medium"
+}
+# you probably only ever need 1
+variable "proxy_nodes" {
+  description = "The number of proxy nodes to deploy"
+  type        = number
+  default     = "1"
+}
+variable "proxy_nodes_root_size" {
+  description = "Size in GB (default=100) of /dev/root for leader nodes"
   type        = number
   default     = 100
 }

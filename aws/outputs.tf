@@ -11,6 +11,14 @@ output "worker" {
     instance.public_ip => instance.private_ip
   }
 }
+
+output "proxy" {
+  value = {
+    for instance in aws_instance.proxy :
+    instance.public_ip => instance.private_ip
+  }
+}
+
 output "ssh_user" {
   value = var.distro_ssh_user[var.distro]
 }

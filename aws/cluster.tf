@@ -71,6 +71,35 @@ resource "aws_instance" "worker" {
   }
 }
 
+resource "aws_instance" "proxy" {
+  count                      = var.proxy_nodes
+  ami                        = coalesce(var.cluster_ami, data.aws_ami.ami.image_id)
+  instance_type              = var.proxy_instance_type
+  key_name                   = aws_key_pair.ssh.key_name
+  vpc_security_group_ids     = [aws_security_group.proxy_sec_group.id]
+  tags                       = merge(
+    local.instance_tags,
+    {
+      Name = "${local.deployment_id}-proxy-node-${count.index}",
+      nodetype = "proxy"
+    }
+  )
+
+  root_block_device {
+    volume_size = var.proxy_nodes_root_size
+  }
+  connection {
+    user        = var.distro_ssh_user[var.distro]
+    host        = self.public_ip
+    private_key = file(var.private_key_path)
+  }
+
+  lifecycle {
+    ignore_changes = [ami]
+  }
+}
+
+
 
 resource "aws_ebs_volume" "ebs_volume" {
   count             = "${var.leader_nodes * var.ec2_ebs_volume_count}"
@@ -86,6 +115,73 @@ resource "aws_volume_attachment" "volume_attachment" {
   volume_id   = "${aws_ebs_volume.ebs_volume.*.id[count.index]}"
   device_name = "${element(var.ec2_ebs_device_names, count.index)}"
   instance_id = "${element(aws_instance.leader.*.id, count.index)}"
+}
+
+resource "aws_security_group" "proxy_sec_group" {
+  name        = "${local.deployment_id}-proxy-sec-group"
+  tags        = local.instance_tags
+  description = "rancher registry proxy access"
+
+  # SSH access from anywhere
+  ingress {
+    description = "Allow anywhere inbound to ssh"
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  # from anything to anything within the security group
+  ingress {
+    description = "from anything to anything within the security group"
+    from_port = 0
+    to_port   = 0
+    protocol  = "-1"
+    self      = true
+  }
+
+  # from anything to anything within the security group
+  egress {
+    description = "from anything to anything within the security group"
+    from_port = 0
+    to_port   = 0
+    protocol  = "-1"
+    self      = true
+  }
+  # from anything to anything within the security group
+  egress {
+    description = "from anything to anything within the security group"
+    from_port = 0
+    to_port   = 0
+    protocol  = "-1"
+
+  }
+
+  # outbound internet access
+  egress {
+    description = "disallow any outbound connections"
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    description = "allow access from node_sec_group hosts"
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    security_groups = ["${aws_security_group.node_sec_group.id}"]
+  }
+  egress {
+    description = "allow access to node_sec_group hosts"
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    security_groups = ["${aws_security_group.node_sec_group.id}"]
+  }
+
+
 }
 
 resource "aws_security_group" "node_sec_group" {
@@ -248,6 +344,10 @@ resource "local_file" "hosts_ini" {
       worker_private_ips         = aws_instance.worker.*.private_ip
       leader_public_ips          = aws_instance.leader.*.public_ip
       leader_private_ips         = aws_instance.leader.*.private_ip
+      proxy_public_ips          = aws_instance.proxy.*.public_ip
+      proxy_private_ips         = aws_instance.proxy.*.private_ip
+  
+  
       ssh_user                   = var.distro_ssh_user[var.distro]
     }
   )
