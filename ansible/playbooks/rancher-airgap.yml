@@ -24,3 +24,11 @@
   become: yes
   roles:
      - role: gantsign.helm
+
+
+- name: tinyproxy setup
+  hosts: proxy
+  become: yes
+  roles: 
+     - role: oefenweb.tinyproxy
+
