@@ -1,3 +1,4 @@
 - src: lablabs.rke2
 - src: gantsign.helm
 - src: oefenweb.tinyproxy
+- src: geerlingguy.docker
