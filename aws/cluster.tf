@@ -24,7 +24,8 @@ resource "aws_instance" "leader" {
   tags                       = merge(
     local.instance_tags,
     {
-      Name = "${local.deployment_id}-node-${count.index}",
+      Name = "${local.deployment_id}-leader-node-${count.index}",
+      Nodetype = "rancher-rke2-leader"
     }
   )
 
@@ -51,7 +52,8 @@ resource "aws_instance" "worker" {
   tags                       = merge(
     local.instance_tags,
     {
-      Name = "${local.deployment_id}-node-${count.index}",
+      Name = "${local.deployment_id}-worker-node-${count.index}",
+      Nodetype = "rancher-rke2-worker"
     }
   )
 
