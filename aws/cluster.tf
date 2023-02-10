@@ -147,6 +147,18 @@ resource "aws_security_group" "node_sec_group" {
   }
 
   egress {
+    description = "allow outbound to releases rancher.com"
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = [
+      "13.33.252.31/32",
+      "13.33.252.27/32",
+      "13.33.252.49/32",
+      "13.33.252.45/32",
+    ]
+  }
+  egress {
     description = "allow outbound to get.helm.sh"
     from_port   = 443
     to_port     = 443
