@@ -15,6 +15,22 @@ locals {
   }
 }
 
+
+resource "aws_vpc" "rancher_vpc" {
+  cidr_block = "10.0.0.0/16"
+  tags = {
+    Name = "rancher-airgapp-${substr(local.uuid, 0, 8)}"
+  }
+}
+
+resource "aws_subnet" "rancher_subnet" {
+  vpc_id     = aws_vpc.rancher_vpc.id
+  cidr_block = "10.0.0.0/24"
+  tags = {
+    Name = "rancher-airgap-subnet-${substr(local.uuid, 0, 8)}"
+  }
+}
+
 resource "aws_instance" "leader" {
   count                      = var.leader_nodes
   ami                        = coalesce(var.cluster_ami, data.aws_ami.ami.image_id)
@@ -77,6 +93,8 @@ resource "aws_instance" "proxy" {
   instance_type              = var.proxy_instance_type
   key_name                   = aws_key_pair.ssh.key_name
   vpc_security_group_ids     = [aws_security_group.proxy_sec_group.id]
+  associate_public_ip_address = true
+  subnet_id                  = aws_subnet.rancher_subnet.id
   tags                       = merge(
     local.instance_tags,
     {
