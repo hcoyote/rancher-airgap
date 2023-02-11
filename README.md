@@ -9,7 +9,7 @@ A quick stub out of an airgapped Rancher install utilizing AWS EC2 infrastructur
 * Ansible
 * lablabs.rke Ansible module
 * geerlingguy.docker Ansible module
-# [rpardini/docker-registry-proxy](https://github.com/rpardini/docker-registry-proxy) docker container
+* [rpardini/docker-registry-proxy](https://github.com/rpardini/docker-registry-proxy) docker container
 
 
 Note: The TF security group setup 
