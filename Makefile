@@ -8,11 +8,14 @@ default:
 play: galaxy
 	ansible-playbook -i hosts.ini -v ansible/playbooks/rancher-airgap.yml	 --diff
 
+# Target: vplay - more verbosity for ansible playbook run
 vplay:  galaxy
 	ansible-playbook -i hosts.ini -vv ansible/playbooks/rancher-airgap.yml	
 
+# Target: galaxy - prereqs installation automatically run if requirements.yml is updated
 galaxy: ansible/.requirements.yml.last_run
 
+# galaxy calls this to trigger tracking of the touchfile so we know when we're up to date
 ansible/.requirements.yml.last_run: ansible/requirements.yml
 	ansible-galaxy install -r ansible/requirements.yml  && touch ansible/.requirements.yml.last_run
 	
@@ -28,9 +31,11 @@ rke_local_artifacts:
 tf-apply: test-aws-access
 	cd aws && terraform apply
 
+# Target: tf-destroy - bring down the Terraform build out and cleanup
 tf-destroy: test-aws-access
 	cd aws && terraform apply -destroy
 
+# Target: test-aws-access - try to detect if no valid login session
 test-aws-access:
 	 @aws sts get-caller-identity --no-cli-pager --output text >/dev/null 2>&1 || (echo "No valid aws identity, try aws sso login first"; exit 1)
 
