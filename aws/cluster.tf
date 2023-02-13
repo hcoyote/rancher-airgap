@@ -1,3 +1,7 @@
+terraform {
+  required_version = ">= 1.0" 
+}
+
 resource "random_uuid" "cluster" {}
 
 resource "time_static" "timestamp" {}
@@ -6,7 +10,6 @@ locals {
   uuid                       = random_uuid.cluster.result
   timestamp                  = time_static.timestamp.unix
   deployment_id              = length(var.deployment_prefix) > 0 ? var.deployment_prefix : "redpanda-${substr(local.uuid, 0, 8)}-${local.timestamp}"
-  tiered_storage_bucket_name = "${local.deployment_id}-bucket"
 
   # tags shared by all instances
   instance_tags = {
@@ -120,19 +123,19 @@ resource "aws_instance" "proxy" {
 
 
 resource "aws_ebs_volume" "ebs_volume" {
-  count             = "${var.leader_nodes * var.ec2_ebs_volume_count}"
-  availability_zone = "${element(aws_instance.leader.*.availability_zone, count.index)}"
-  size              = "${var.ec2_ebs_volume_size}"
-  type              = "${var.ec2_ebs_volume_type}"
-  iops              = "${var.ec2_ebs_volume_iops}"
-  throughput        = "${var.ec2_ebs_volume_throughput}"
+  count             = var.leader_nodes * var.ec2_ebs_volume_count
+  availability_zone = element(aws_instance.leader[*].availability_zone, count.index)
+  size              = var.ec2_ebs_volume_size
+  type              = var.ec2_ebs_volume_type
+  iops              = var.ec2_ebs_volume_iops
+  throughput        = var.ec2_ebs_volume_throughput
 }
 
 resource "aws_volume_attachment" "volume_attachment" {
-  count       = "${var.leader_nodes * var.ec2_ebs_volume_count}"
-  volume_id   = "${aws_ebs_volume.ebs_volume.*.id[count.index]}"
-  device_name = "${element(var.ec2_ebs_device_names, count.index)}"
-  instance_id = "${element(aws_instance.leader.*.id, count.index)}"
+  count       = var.leader_nodes * var.ec2_ebs_volume_count
+  volume_id   = aws_ebs_volume.ebs_volume[*].id[count.index]
+  device_name = element(var.ec2_ebs_device_names, count.index)
+  instance_id = element(aws_instance.leader[*].id, count.index)
 }
 
 
@@ -385,12 +388,12 @@ resource "aws_key_pair" "ssh" {
 resource "local_file" "hosts_ini" {
   content = templatefile("${path.module}/../templates/hosts_ini.tpl",
     {
-      worker_public_ips          = aws_instance.worker.*.public_ip
-      worker_private_ips         = aws_instance.worker.*.private_ip
-      leader_public_ips          = aws_instance.leader.*.public_ip
-      leader_private_ips         = aws_instance.leader.*.private_ip
-      proxy_public_ips          = aws_instance.proxy.*.public_ip
-      proxy_private_ips         = aws_instance.proxy.*.private_ip
+      worker_public_ips          = aws_instance.worker[*].public_ip
+      worker_private_ips         = aws_instance.worker[*].private_ip
+      leader_public_ips          = aws_instance.leader[*].public_ip
+      leader_private_ips         = aws_instance.leader[*].private_ip
+      proxy_public_ips          = aws_instance.proxy[*].public_ip
+      proxy_private_ips         = aws_instance.proxy[*].private_ip
   
   
       ssh_user                   = var.distro_ssh_user[var.distro]

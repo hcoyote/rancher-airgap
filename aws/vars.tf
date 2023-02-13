@@ -1,22 +1,17 @@
+terraform {
+  required_version = ">= 1.0" 
+}
+
 variable "aws_region" {
   description = "The AWS region to deploy the infrastructure on"
   default     = "us-west-2"
+  type        = string
 }
 
 variable "worker_nodes" {
   description = "Number of client hosts"
   type        = number
   default     = 0
-}
-
-variable "client_distro" {
-  description = "Linux distribution to use for clients."
-  default     = "ubuntu-focal"
-}
-
-variable "client_instance_type" {
-  description = "Default client instance type to create"
-  default     = "m5n.2xlarge"
 }
 
 variable "deployment_prefix" {
@@ -28,18 +23,15 @@ variable "deployment_prefix" {
 variable "distro" {
   description = "The default distribution to base the cluster on"
   default     = "ubuntu-focal"
+  type        = string
 }
 
-variable "enable_monitoring" {
-  description = "Setup a prometheus/grafana instance"
-  type        = bool
-  default     = true
-}
 
 ## It is important that device names do not get duplicated on hosts, in rare circumstances the choice of nodes * volumes can result in a factor that causes duplication. Modify this field so there is not a common factor.
 ## Please pr a more elegant solution if you have one.
 variable "ec2_ebs_device_names" {
   description = "Device names for EBS volumes"
+  type        = list(string)
   default     = [
     "/dev/xvdba",
     "/dev/xvdbb",
@@ -73,42 +65,43 @@ variable "ec2_ebs_device_names" {
 variable "ec2_ebs_volume_count" {
   description = "Number of EBS volumes to attach to each Redpanda node"
   default     = 0
+  type        = number
 }
 
 variable "ec2_ebs_volume_iops" {
   description = "IOPs for GP3 Volumes"
   default     = 16000
+  type        = number
 }
 
 variable "ec2_ebs_volume_size" {
   description = "Size of each EBS volume"
   default     = 100
+  type        = number
 }
 
 variable "ec2_ebs_volume_throughput" {
   description = "Throughput per volume in MiB"
   default     = 250
+  type        = number
 }
 
 variable "ec2_ebs_volume_type" {
   description = "EBS Volume Type (gp3 recommended for performance)"
   default     = "gp3"
-}
-
-variable "ha" {
-  description = "Whether to use placement groups to create an HA topology"
-  type        = bool
-  default     = false
+  type        = string
 }
 
 variable "instance_type" {
   description = "Default redpanda instance type to create"
   default     = "i3.2xlarge"
+  type        = string
 }
 
 variable "machine_architecture" {
   description = "Architecture used for selecting the AMI - change this if using ARM based instances"
   default     = "x86_64"
+  type        = string
 }
 
 variable "leader_nodes" {
@@ -133,6 +126,7 @@ variable "worker_nodes_root_size" {
 variable "proxy_instance_type" {
   description = "Default redpanda instance type to create"
   default     = "t3a.medium"
+  type        = string
 }
 # you probably only ever need 1
 variable "proxy_nodes" {
@@ -146,29 +140,10 @@ variable "proxy_nodes_root_size" {
   default     = 100
 }
 
-variable "prometheus_instance_type" {
-  description = "Instant type of the prometheus/grafana node"
-  default     = "c5.2xlarge"
-}
-
-variable "cluster_ami" {
-  description = "AMI for Redpanda broker nodes (if not set, will select based on the client_distro variable"
-  default     = null
-}
-
-variable "prometheus_ami" {
-  description = "AMI for prometheus nodes (if not set, will select based on the client_distro variable"
-  default     = null
-}
-
-variable "client_ami" {
-  description = "AMI for Redpanda client nodes (if not set, will select based on the client_distro variable"
-  default     = null
-}
-
 variable "public_key_path" {
   description = "The public key used to ssh to the hosts"
   default     = "~/.ssh/id_rsa.pub"
+  type        = string
 }
 
 data "aws_ami" "ami" {

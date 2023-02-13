@@ -1,3 +1,7 @@
+terraform {
+  required_version = ">= 1.0" 
+}
+
 output "leader" {
   value = {
     for instance in aws_instance.leader :
