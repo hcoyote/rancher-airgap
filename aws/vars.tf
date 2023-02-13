@@ -134,6 +134,13 @@ variable "proxy_nodes" {
   type        = number
   default     = "1"
 }
+
+variable "cluster_ami" {
+  description = "AMI for Redpanda broker nodes (if not set, will select based on the client_distro variable"
+  default     = null
+  type        = string
+}
+
 variable "proxy_nodes_root_size" {
   description = "Size in GB (default=100) of /dev/root for leader nodes"
   type        = number
