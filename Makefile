@@ -1,4 +1,12 @@
-.PHONY: galaxy
+.PHONY: galaxy test-aws-access play vplay tf-lint tf-apply tf-destroy
+
+GROUP=""
+ifeq ($(GROUP), "")
+	ADDITIONAL_ARGS=
+else 
+	ADDITIONAL_ARGS=-l $(GROUP)
+endif
+
 
 default: 
 	@echo "Makefile Help:\n\n"; 
@@ -6,11 +14,11 @@ default:
 
 # Target: play - run playbook
 play: galaxy
-	ansible-playbook -i hosts.ini -v ansible/playbooks/rancher-airgap.yml	 --diff
+	ansible-playbook -i hosts.ini -v ansible/playbooks/rancher-airgap.yml	 --diff  $(ADDITIONAL_ARGS)
 
 # Target: vplay - more verbosity for ansible playbook run
 vplay:  galaxy
-	ansible-playbook -i hosts.ini -vv ansible/playbooks/rancher-airgap.yml	
+	ansible-playbook -i hosts.ini -vv ansible/playbooks/rancher-airgap.yml	--diff $(ADDITIONAL_ARGS)
 
 # Target: galaxy - prereqs installation automatically run if requirements.yml is updated
 galaxy: ansible/.requirements.yml.last_run
@@ -34,6 +42,9 @@ tf-apply: test-aws-access
 # Target: tf-destroy - bring down the Terraform build out and cleanup
 tf-destroy: test-aws-access
 	cd aws && terraform apply -destroy
+
+tf-lint:
+	cd aws && tflint
 
 # Target: test-aws-access - try to detect if no valid login session
 test-aws-access:
