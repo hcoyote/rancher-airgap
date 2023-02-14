@@ -34,12 +34,33 @@ resource "aws_subnet" "rancher_subnet" {
   }
 }
 
+resource "aws_internet_gateway" "rancher_igw" {
+  vpc_id     = aws_vpc.rancher_vpc.id
+  tags = {
+    Name = "rancher-airgap-igw-${substr(local.uuid, 0, 8)}"
+  }
+}
+
+resource "aws_route_table" "rancher_rt" {
+  vpc_id     = aws_vpc.rancher_vpc.id
+  route {
+    cidr_block = "0.0.0.0/0"
+    gateway_id = aws_internet_gateway.rancher_igw.id
+  }
+
+  tags = {
+    Name = "rancher-airgap-rt-${substr(local.uuid, 0, 8)}"
+  }
+}
+
 resource "aws_instance" "leader" {
   count                      = var.leader_nodes
   ami                        = coalesce(var.cluster_ami, data.aws_ami.ami.image_id)
   instance_type              = var.instance_type
   key_name                   = aws_key_pair.ssh.key_name
   vpc_security_group_ids     = [aws_security_group.node_sec_group.id]
+  associate_public_ip_address = true
+  subnet_id                  = aws_subnet.rancher_subnet.id
   tags                       = merge(
     local.instance_tags,
     {
@@ -68,6 +89,8 @@ resource "aws_instance" "worker" {
   instance_type              = var.instance_type
   key_name                   = aws_key_pair.ssh.key_name
   vpc_security_group_ids     = [aws_security_group.node_sec_group.id]
+  associate_public_ip_address = true
+  subnet_id                  = aws_subnet.rancher_subnet.id
   tags                       = merge(
     local.instance_tags,
     {
@@ -166,7 +189,7 @@ resource "aws_security_group_rule" "proxy_sec_group_intra_inbound" {
   type              = "ingress"
   description       = "PROXY: allow to anything from anything within the security group"
   from_port         = 0
-  to_port           = 0
+  to_port           = 65535
   protocol          = "-1"
   self              = true
   security_group_id = aws_security_group.proxy_sec_group.id
@@ -176,7 +199,7 @@ resource "aws_security_group_rule" "proxy_sec_group_intra_outbound" {
   type              = "egress"
   description       = "PROXY: allow from anything to anything within the security group"
   from_port         = 0
-  to_port           = 0
+  to_port           = 65535
   protocol          = "-1"
   self              = true
   security_group_id = aws_security_group.proxy_sec_group.id
@@ -186,7 +209,7 @@ resource "aws_security_group_rule" "proxy_sec_group_any_outbound" {
   type              = "egress"
   description       = "PROXY: allow any outbound"
   from_port         = 0
-  to_port           = 0
+  to_port           = 65535
   protocol          = "tcp"
   cidr_blocks       = ["0.0.0.0/0"]
   security_group_id = aws_security_group.proxy_sec_group.id
@@ -196,7 +219,7 @@ resource "aws_security_group_rule" "proxy_sec_group_from_node_sec_group" {
   type              = "ingress"
   description       = "PROXY: allow rancher sg to talk to proxy sg"
   from_port         = 0
-  to_port           = 0
+  to_port           = 65535
   protocol          = "tcp"
   security_group_id = aws_security_group.proxy_sec_group.id
   source_security_group_id = aws_security_group.node_sec_group.id
@@ -206,7 +229,7 @@ resource "aws_security_group_rule" "proxy_sec_group_to_node_sec_group" {
   type              = "egress"
   description       = "PROXY: allow proxy sg to talk to rancher sg"
   from_port         = 0
-  to_port           = 0
+  to_port           = 65535
   protocol          = "tcp"
   security_group_id = aws_security_group.proxy_sec_group.id
   source_security_group_id = aws_security_group.node_sec_group.id
@@ -240,7 +263,7 @@ resource "aws_security_group_rule" "node_sec_group_intra_inbound" {
   type              = "ingress"
   description       = "RANCHER: allow to anything from anything within the security group"
   from_port         = 0
-  to_port           = 0
+  to_port           = 65535
   protocol          = "-1"
   self              = true
   security_group_id = aws_security_group.node_sec_group.id
@@ -250,7 +273,7 @@ resource "aws_security_group_rule" "node_sec_group_intra_outbound" {
   type              = "egress"
   description       = "RANCHER: allow from anything to anything within the security group"
   from_port         = 0
-  to_port           = 0
+  to_port           = 65535
   protocol          = "-1"
   self              = true
   security_group_id = aws_security_group.node_sec_group.id
@@ -260,7 +283,7 @@ resource "aws_security_group_rule" "node_sec_group_from_proxy_sec_group" {
   type              = "ingress"
   description       = "RANCHER: allow proxy sg to talk to rancher sg"
   from_port         = 0
-  to_port           = 0
+  to_port           = 65535
   protocol          = "tcp"
   security_group_id = aws_security_group.node_sec_group.id
   source_security_group_id = aws_security_group.proxy_sec_group.id
@@ -270,7 +293,7 @@ resource "aws_security_group_rule" "node_sec_group_to_proxy_sec_group" {
   type              = "egress"
   description       = "PROXY: allow proxy sg to talk to rancher sg"
   from_port         = 0
-  to_port           = 0
+  to_port           = 65535
   protocol          = "tcp"
   security_group_id = aws_security_group.node_sec_group.id
   source_security_group_id = aws_security_group.proxy_sec_group.id
