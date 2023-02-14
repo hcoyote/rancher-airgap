@@ -9,7 +9,7 @@
     # Ensures this user account is present. This should match the `ansible_user`
     # field used in your host inventory and/or configuration.
     user_name: panda
-    user_pass: $6$laKEI9cBziZPWnSW$Im.fT9LMhn.GLM0fc2RnyXnv1DwK2vkMCdOX.iEdCNx4ND/fqh1UX4aEe18s9gXKh6SDK/IQOMqF/ozR6Hrpw.
+    user_pass: '*'
 
     # Generating password string, see:
     # https://docs.ansible.com/ansible/latest/reference_appendices/faq.html#how-do-i-generate-encrypted-passwords-for-the-user-module
