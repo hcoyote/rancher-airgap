@@ -95,8 +95,8 @@
 
 - name: Deploy RKE2
   hosts: 
-    - leader
-    - worker
+    - leaders
+    - workers
   become: yes
   environment:
     http_proxy: "http://{{ hostvars[groups['proxy'][0]].private_ip }}:8888/"
