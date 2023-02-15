@@ -20,6 +20,10 @@ play: galaxy
 vplay:  galaxy
 	ansible-playbook -i hosts.ini -vv ansible/playbooks/rancher-airgap.yml	--diff $(ADDITIONAL_ARGS)
 
+proxyplay: 
+	make play GROUP=proxy
+
+
 # Target: galaxy - prereqs installation automatically run if requirements.yml is updated
 galaxy: ansible/.requirements.yml.last_run
 
