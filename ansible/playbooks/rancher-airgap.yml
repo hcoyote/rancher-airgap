@@ -1,32 +1,31 @@
-
-- name: tinyproxy setup
+---
+- name: Tinyproxy setup
   hosts: proxy
-  become: yes
+  become: true
   vars:
      tinyproxy_allow:
-      - "{{ ansible_lo['ipv4']['address'] }}"
-      - "{{ ansible_default_ipv4['address'] }}"
-      - "10.0.0.0/8"
-
-  roles: 
+        - "{{ ansible_lo['ipv4']['address'] }}"
+        - "{{ ansible_default_ipv4['address'] }}"
+        - "10.0.0.0/8"
+  roles:
      - role: oefenweb.tinyproxy
 
-- name: docker for proxy
+- name: Docker for proxy
   hosts: proxy
-  become: yes
+  become: true
   vars:
      docker_edition: 'ce'
      docker_packages:
-       - "docker-{{ docker_edition }}"
-       - "docker-{{ docker_edition }}-cli"
-       - "docker-{{ docker_edition }}-rootless-extras"
+        - "docker-{{ docker_edition }}"
+        - "docker-{{ docker_edition }}-cli"
+        - "docker-{{ docker_edition }}-rootless-extras"
      docker_packages_state: present
      docker_service_manage: true
      docker_service_state: started
      docker_service_enabled: true
      docker_restart_handler_state: restarted
      docker_users:
-       - ubuntu
+        - ubuntu
   roles:
      - role: geerlingguy.docker
 
@@ -35,112 +34,105 @@
 #       -v $(pwd)/docker_mirror_cache:/docker_mirror_cache \
 #       -v $(pwd)/docker_mirror_certs:/ca \
 #       rpardini/docker-registry-proxy:latest
-- name: Load docker_registry_proxy 
+- name: Load docker_registry_proxy
   hosts: proxy
-  become: yes
+  become: true
   tasks:
-    - name: "launching docker_registry_proxy"
-      ansible.builtin.docker_container:
-        name: docker_registry_proxy
-        image: rpardini/docker-registry-proxy:latest
-        state: started
-        volumes:
-          - /home/ubuntu/docker_mirror_cache:/docker_mirror_cache
-          - /home/ubuntu/docker_mirror_certs:/ca
-        published_ports:
-          - 0.0.0.0:3128:3128
-        env:
-            "ENABLE_MANIFEST_CACHE": "true"
-            "REGISTRIES": "k8s.io gcr.io quay.io docker.redpanda.com"
-    - name: "Wait until docker proxy is ready"
-      ansible.builtin.shell: |
-        set -o pipefail
-        curl -s http://localhost:3128/ca.crt | grep -c "END CERTIFICATE" 
-      args:
-        executable: /bin/bash
-      changed_when: false
-      register: proxy_ca_ready
-      until:
-        - proxy_ca_ready.stdout | int 
-      retries: 100
-      delay: 15
-      run_once: true
-
-        
-
+     - name: Launching docker_registry_proxy
+       ansible.builtin.docker_container:
+          name: docker_registry_proxy
+          image: rpardini/docker-registry-proxy:latest
+          state: started
+          volumes:
+             - /home/ubuntu/docker_mirror_cache:/docker_mirror_cache
+             - /home/ubuntu/docker_mirror_certs:/ca
+          published_ports:
+             - 0.0.0.0:3128:3128
+          env:
+             "ENABLE_MANIFEST_CACHE": "true"
+             "REGISTRIES": "k8s.io gcr.io quay.io docker.redpanda.com"
+     - name: Wait until docker proxy is ready
+       ansible.builtin.shell: |
+          set -o pipefail
+          curl -s http://localhost:3128/ca.crt | grep -c "END CERTIFICATE"
+       args:
+          executable: /bin/bash
+       changed_when: false
+       register: proxy_ca_ready
+       until:
+          - proxy_ca_ready.stdout | int
+       retries: 100
+       delay: 15
+       run_once: true
 
 - name: Deploy docker proxy certificates
-  hosts: 
-    - leaders
-    - workers
+  hosts:
+     - leaders
+     - workers
   tasks:
-    - name: get docker proxy certificates
-      ansible.builtin.get_url:
-        url: "http://{{ hostvars[groups['proxy'][0]].private_ip }}:3128/ca.crt"
-        dest: /usr/share/ca-certificates/docker_registry_proxy.crt
-        mode: '0444'
-        use_proxy: false
-      register: docker_ca_downloaded
-    - name: Add docker proxy certificate to local config
-      ansible.builtin.lineinfile:
-        path: /etc/ca-certificates.conf
-        regexp: ^docker_registry_proxy.crt
-        line: docker_registry_proxy.crt
-      register: update_global_certs
-    - name: Refresh certificate cache for new docker proxy certificate
-      ansible.builtin.command:
-        cmd:  update-ca-certificates --fresh
-      when: update_global_certs.changed
-
+     - name: Get docker proxy certificates
+       ansible.builtin.get_url:
+          url: "http://{{ hostvars[groups['proxy'][0]].private_ip }}:3128/ca.crt"
+          dest: /usr/share/ca-certificates/docker_registry_proxy.crt
+          mode: '0444'
+          use_proxy: false
+       register: docker_ca_downloaded
+     - name: Add docker proxy certificate to local config
+       ansible.builtin.lineinfile:
+          path: /etc/ca-certificates.conf
+          regexp: ^docker_registry_proxy.crt
+          line: docker_registry_proxy.crt
+       register: update_global_certs
+     - name: Refresh certificate cache for new docker proxy certificate
+       ansible.builtin.command:
+          cmd: update-ca-certificates --fresh
+       when: update_global_certs.changed
 
 - name: Deploy RKE2
-  hosts: 
-    - leaders
-    - workers
-  become: yes
+  hosts:
+     - leaders
+     - workers
+  become: true
   environment:
-    http_proxy: "http://{{ hostvars[groups['proxy'][0]].private_ip }}:8888/"
-    https_proxy: "https://{{ hostvars[groups['proxy'][0]].private_ip }}:8888/"
+     http_proxy: "http://{{ hostvars[groups['proxy'][0]].private_ip }}:8888/"
+     https_proxy: "https://{{ hostvars[groups['proxy'][0]].private_ip }}:8888/"
   vars:
-    rke2_environment_options:
-      - "HTTP_PROXY=http://{{ hostvars[groups['proxy'][0]].private_ip }}:3128/"
-      - "HTTPS_PROXY=http://{{ hostvars[groups['proxy'][0]].private_ip }}:3128/"
-      - "http_proxy=http://{{ hostvars[groups['proxy'][0]].private_ip }}:3128/"
-      - "https_proxy=http://{{ hostvars[groups['proxy'][0]].private_ip }}:3128/"
-      - "NO_PROXY=127.0.0.0/8,10.0.0.0/8,cattle-system.svc,172.16.0.0/12,192.168.0.0/16,.svc,.cluster.local"
-    rke2_servers_group_name: leaders
-    rke2_airgap_mode: true
-    rke2_airgap_implementation: download
-    rke2_cni:
-      - multus
-      - calico
-    rke2_artifact:
-      - sha256sum-{{ rke2_architecture }}.txt
-      - rke2.linux-{{ rke2_architecture }}.tar.gz
-      - rke2-images.linux-{{ rke2_architecture }}.tar.zst
-      - rke2-images-multus.linux-{{ rke2_architecture }}.tar.zst
-      - rke2-images-calico.linux-{{ rke2_architecture }}.tar.zst
-    rke2_download_kubeconf: true
+     rke2_environment_options:
+        - "HTTP_PROXY=http://{{ hostvars[groups['proxy'][0]].private_ip }}:3128/"
+        - "HTTPS_PROXY=http://{{ hostvars[groups['proxy'][0]].private_ip }}:3128/"
+        - "http_proxy=http://{{ hostvars[groups['proxy'][0]].private_ip }}:3128/"
+        - "https_proxy=http://{{ hostvars[groups['proxy'][0]].private_ip }}:3128/"
+        - "NO_PROXY=127.0.0.0/8,10.0.0.0/8,cattle-system.svc,172.16.0.0/12,192.168.0.0/16,.svc,.cluster.local"
+     rke2_servers_group_name: leaders
+     rke2_airgap_mode: true
+     rke2_airgap_implementation: download
+     rke2_cni:
+        - multus
+        - calico
+     rke2_artifact:
+        - sha256sum-{{ rke2_architecture }}.txt
+        - rke2.linux-{{ rke2_architecture }}.tar.gz
+        - rke2-images.linux-{{ rke2_architecture }}.tar.zst
+        - rke2-images-multus.linux-{{ rke2_architecture }}.tar.zst
+        - rke2-images-calico.linux-{{ rke2_architecture }}.tar.zst
+     rke2_download_kubeconf: true
   roles:
      - role: lablabs.rke2
        when: not docker_ca_downloaded.failed
   tasks:
-    - name: create kubectl symlink
-      ansible.builtin.file:
-        src: /var/lib/rancher/rke2/bin/kubectl
-        dest: /usr/local/bin/kubectl
-        state: link
-
+     - name: Create kubectl symlink
+       ansible.builtin.file:
+          src: /var/lib/rancher/rke2/bin/kubectl
+          dest: /usr/local/bin/kubectl
+          state: link
 
 - name: Install Helm
-  hosts: 
-    - leaders
-    - workers
-  become: yes
+  hosts:
+     - leaders
+     - workers
+  become: true
   environment:
-    http_proxy: "http://{{ hostvars[groups['proxy'][0]].private_ip }}:8888/"
-    https_proxy: "https://{{ hostvars[groups['proxy'][0]].private_ip }}:8888/"
+     http_proxy: "http://{{ hostvars[groups['proxy'][0]].private_ip }}:8888/"
+     https_proxy: "https://{{ hostvars[groups['proxy'][0]].private_ip }}:8888/"
   roles:
      - role: gantsign.helm
-
-
