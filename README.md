@@ -102,4 +102,46 @@ $ make tf-apply
 $ make play
 ```
 
+## Watching the docker proxy logs
 
+```
+ssh <proxynode>
+sudo docker logs -f docker_registry_proxy
+```
+
+## Watching the tinyproxy logs
+
+```
+ssh <proxynode>
+sudo tail -f /var/log/tinyproxy/tinproxy.log
+```
+
+## Connecting to your service 
+
+For testing purposes, we're just going to use `kube port-forward` to validate connectivity to the service. Since we're airgapping the rancher install, any client connectivity would need a tunnel of some form inside the perimeter.
+
+*Note: There are likely better ways to do this.*
+
+
+### If a security group rule does not exist
+
+If you do not have inbound ports open for your, you can create a tunnel with ssh.
+
+```
+ssh -L8080:localhost:8080 <rancher leader node>
+kubectl port-forward -n <namespace> svc/<appname> 8080:8080
+```
+
+Then on your local machine, outside of the rke2 cluster, attempt to connect to http://localhost:8080/ with your browser
+
+
+### If a security group rule exists
+
+If you have an inbound port enabled for your security group, you can use `kubectl port-forward` to force open a listening port on the leader node's primary network interface.
+
+```
+ssh <rancher leader node>
+kubectl port-forward --address 0.0.0.0 -n redpanda svc/redpanda-console 8080
+```
+
+This will make the leader node listen on 8080 to any incoming connection and then forward it to svc/redpanda-console
