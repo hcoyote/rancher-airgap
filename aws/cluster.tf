@@ -45,7 +45,7 @@ locals {
 resource "aws_vpc" "rancher_vpc" {
   cidr_block = "10.0.0.0/16"
   tags = {
-    Name = "rancher-airgapp-${substr(local.uuid, 0, 8)}"
+    Name = "rancher-airgap-${substr(local.uuid, 0, 8)}"
   }
 }
 
