@@ -1,6 +1,6 @@
 name: linting and testing
 
-on: [pull_request]
+on: [push, pull_request]
 
 jobs:
   terraform-lint:
