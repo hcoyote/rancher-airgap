@@ -30,15 +30,52 @@ This build works only for AWS.
 
 This will build a VPC that contains two security groups, one for a proxy node that has full outbound access, and one for the locked down rancher/rke2 cluster. The two security groups are linked so nodes in one can communicate with nodes in the other. This is to facilitate using the proxy for container downloads.
 
-## Rancher
+# The environment being built
 
 ## Proxy
 
 The proxy builds a single small node running docker in order to launch an instance of `rpardini/docker-registry-proxy`.
 
+Additionally, we install tinyproxy to get around some configuration limitations in `docker-registry-proxy`. Tinyproxy runs outside of a container, directly in the proxy node OS.
+
+The build out of the proxy node must come before the rancher build, due to the rancher-sg being heavily locked down from making outbound network connections.
+
+The `docker-registry-proxy` will create two directories in /home/ubuntu for storing the proxy cache and the generated TLS CA and related certificates. The Ansible run will wait for the `ca.crt` to be accessible before continuing to the RKE install. 
+
+*Note:* If the proxy build runs, but the certificate cannot be correctly generated _and_ downloaded to the RKE cluster, you will not be able to pull images required by launching pods.
+
+*Warn:* If you ever destroy the proxy, or lose the certificates it generates, you will need to update these on the RKE cluster and fully restart it.
+
+TODO: Replace with a container like https://github.com/kalaksi/docker-tinyproxy
+
+
+## Rancher
+
+The cluster is designed to be built out in an airgapped fashion using the `lablabs.rke` module. The initial list of containers for bootstrapping is defined in the playbook, but appears to be incomplete, as the build out stalls during rke2 bootstrapping if it cannot reach Docker Hub. 
+
+As part of the ansible build out, we pre-seed the rancher build with the `docker-registry-proxy` self-signed CA and some additional environment variables to point Rancher to the proxy.
+
+TODO: lablabs.rke2 only installs rke2, need to add support in this project for launching the Rancher management UI.
+
+## Helm
+
+We download and install Helm straight from Github.
+
+## kubectl
+
+We rely upon `kubectl` from the Rancher install, but it appears to place it in a non-obvious location under /var/lib. To facilitate easier interaction with the cluster, we make sure `/usr/local/bin/kubectl` is symlinked into the right location.
+
+To make it easier to work with `kubectl` as an unprivileged user, make sure to copy `/etc/rancher/rke2/rke2.yaml` to `$HOME/.kube/config`
+
+## stern
+
+TODO: add the installation of `stern` to make dealing with Kubernetes log viewing easier
+
 
 # Running the build
 
+
+## Make targets for building
 The repo contains a `Makefile` with several targets to facilitate launching things.
 
 ```
@@ -56,3 +93,13 @@ test-aws-access - try to detect if no valid login session
 clean - clean everything
 clean_rke_local_artifacts - cleanup the local artifact download location
 ```
+
+## How do I launch?
+
+```
+$ aws sso login
+$ make tf-apply
+$ make play
+```
+
+
