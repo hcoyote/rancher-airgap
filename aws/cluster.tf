@@ -18,7 +18,30 @@ locals {
   }
 }
 
-
+#
+# AWS Networking wire up for Rancher VPC
+#
+# TF Names:
+# 
+# rancher_vpc -> rancher_subnet -> rancher_rt -> rancher_igw -> 0.0.0.0 
+# 10.0.0.0/16    10.0.0.0/24       routes for    
+#                                  0.0.0.0
+#                                  10.0.0.0/160
+#
+# vpc builds a subnet with a route table to allow packets to the world via 
+# the internet gateway.
+#
+# Note: we set the vpc's main route table association to rancher_rt to
+# prevent a stray route table from automatically being generated and
+# stopping traffic from routing correctly.
+#
+# VPC Name tags (for easier understanding in AWS UI)
+#
+#     rancher-airgap-<random> (vpc)
+#     rancher-airgap-subnet-<random>
+#     rancher-airgap-rt-<random>
+#     rancher-airgap-igw-<random>
+#
 resource "aws_vpc" "rancher_vpc" {
   cidr_block = "10.0.0.0/16"
   tags = {
@@ -43,6 +66,7 @@ resource "aws_internet_gateway" "rancher_igw" {
 
 resource "aws_route_table" "rancher_rt" {
   vpc_id     = aws_vpc.rancher_vpc.id
+
   route {
     cidr_block = "0.0.0.0/0"
     gateway_id = aws_internet_gateway.rancher_igw.id
@@ -58,6 +82,10 @@ resource "aws_main_route_table_association" "rancher_mrta" {
   route_table_id = aws_route_table.rancher_rt.id
 }
 
+#
+# AWS Instance definitions
+#
+#
 resource "aws_instance" "leader" {
   count                      = var.leader_nodes
   ami                        = coalesce(var.cluster_ami, data.aws_ami.ami.image_id)
