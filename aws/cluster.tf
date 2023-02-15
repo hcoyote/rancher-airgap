@@ -53,6 +53,11 @@ resource "aws_route_table" "rancher_rt" {
   }
 }
 
+resource "aws_main_route_table_association" "rancher_mrta" {
+  vpc_id = aws_vpc.rancher_vpc.id
+  route_table_id = aws_route_table.rancher_rt.id
+}
+
 resource "aws_instance" "leader" {
   count                      = var.leader_nodes
   ami                        = coalesce(var.cluster_ami, data.aws_ami.ami.image_id)
