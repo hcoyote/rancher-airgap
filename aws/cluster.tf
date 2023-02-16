@@ -354,63 +354,63 @@ resource "aws_security_group_rule" "node_sec_group_rancherui_inbound" {
   security_group_id = aws_security_group.node_sec_group.id
 }
 
-resource "aws_security_group_rule" "node_sec_group_rancherweb_outbound" {
-  type              = "egress"
-  description       = "RANCHER: allow any to rancher management in security group"
-  from_port         = 443
-  to_port           = 443 
-  protocol          = "tcp"
-  cidr_blocks = [
-      "13.33.252.31/32", # rancher.com
-      "13.33.252.27/32", # rancher.com
-      "13.33.252.49/32", # rancher.com
-      "13.33.252.45/32", # rancher.com
-      "152.195.19.97/32", # get.helm.sh
-      "104.21.42.101/32", # rke2.io
-      "172.67.204.246/32" # rke2.io
-    ]
-  security_group_id = aws_security_group.node_sec_group.id
-}
-resource "aws_security_group_rule" "node_sec_group_ubuntuhttps_outbound" {
-  type              = "egress"
-  description       = "RANCHER: allow outbound to ubuntu mirrors"
-  from_port         = 443
-  to_port           = 443 
-  protocol          = "tcp"
-  cidr_blocks       = var.ubuntu_cidrs
-  security_group_id = aws_security_group.node_sec_group.id
-}
-resource "aws_security_group_rule" "node_sec_group_ubuntuhttp_outbound" {
-  type              = "egress"
-  description       = "RANCHER: allow outbound to ubuntu mirrors"
-  from_port         = 80
-  to_port           = 80 
-  protocol          = "tcp"
-  cidr_blocks       = var.ubuntu_cidrs
-  security_group_id = aws_security_group.node_sec_group.id
-}
-resource "aws_security_group_rule" "node_sec_group_github_outbound" {
-  type              = "egress"
-  description       = "RANCHER: allow outbound to ubuntu mirrors"
-  from_port         = 80
-  to_port           = 80 
-  protocol          = "tcp"
-  cidr_blocks = [    
-     "192.30.252.0/22",
-    "185.199.108.0/22",
-    "140.82.112.0/20",
-    "143.55.64.0/20",
-    "20.201.28.151/32",
-    "20.205.243.166/32",
-    "102.133.202.242/32",
-    "20.248.137.48/32",
-    "20.207.73.82/32",
-    "20.27.177.113/32",
-    "20.200.245.247/32",
-    "20.233.54.53/32"]
-
-  security_group_id = aws_security_group.node_sec_group.id
-}
+#resource "aws_security_group_rule" "node_sec_group_rancherweb_outbound" {
+#  type              = "egress"
+#  description       = "RANCHER: allow any to rancher management in security group"
+#  from_port         = 443
+#  to_port           = 443 
+#  protocol          = "tcp"
+#  cidr_blocks = [
+#      "13.33.252.31/32", # rancher.com
+#      "13.33.252.27/32", # rancher.com
+#      "13.33.252.49/32", # rancher.com
+#      "13.33.252.45/32", # rancher.com
+#      "152.195.19.97/32", # get.helm.sh
+#      "104.21.42.101/32", # rke2.io
+#      "172.67.204.246/32" # rke2.io
+#    ]
+#  security_group_id = aws_security_group.node_sec_group.id
+#}
+#resource "aws_security_group_rule" "node_sec_group_ubuntuhttps_outbound" {
+#  type              = "egress"
+#  description       = "RANCHER: allow outbound to ubuntu mirrors"
+#  from_port         = 443
+#  to_port           = 443 
+#  protocol          = "tcp"
+#  cidr_blocks       = var.ubuntu_cidrs
+#  security_group_id = aws_security_group.node_sec_group.id
+#}
+#resource "aws_security_group_rule" "node_sec_group_ubuntuhttp_outbound" {
+#  type              = "egress"
+#  description       = "RANCHER: allow outbound to ubuntu mirrors"
+#  from_port         = 80
+#  to_port           = 80 
+#  protocol          = "tcp"
+#  cidr_blocks       = var.ubuntu_cidrs
+#  security_group_id = aws_security_group.node_sec_group.id
+#}
+#resource "aws_security_group_rule" "node_sec_group_github_outbound" {
+#  type              = "egress"
+#  description       = "RANCHER: allow outbound to github"
+#  from_port         = 80
+#  to_port           = 80 
+#  protocol          = "tcp"
+#  cidr_blocks = [    
+#     "192.30.252.0/22",
+#    "185.199.108.0/22",
+#    "140.82.112.0/20",
+#    "143.55.64.0/20",
+#    "20.201.28.151/32",
+#    "20.205.243.166/32",
+#    "102.133.202.242/32",
+#    "20.248.137.48/32",
+#    "20.207.73.82/32",
+#    "20.27.177.113/32",
+#    "20.200.245.247/32",
+#    "20.233.54.53/32"]
+#
+#  security_group_id = aws_security_group.node_sec_group.id
+#}
 
 
 
