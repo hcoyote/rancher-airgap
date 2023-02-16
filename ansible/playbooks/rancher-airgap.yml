@@ -56,7 +56,7 @@
              - 0.0.0.0:3128:3128
           env:
              "ENABLE_MANIFEST_CACHE": "true"
-             "REGISTRIES": "k8s.io gcr.io quay.io docker.redpanda.com"
+             "REGISTRIES": "k8s.io gcr.io quay.io https://docker.redpanda.com"
      - name: Wait until docker proxy is ready
        ansible.builtin.shell: |
           set -o pipefail
@@ -94,6 +94,17 @@
           cmd: update-ca-certificates --fresh
        when: update_global_certs.changed
 
+- name: Install Helm
+  hosts:
+     - leaders
+     - workers
+  become: true
+  environment:
+     http_proxy: "http://{{ hostvars[groups['proxy'][0]].private_ip }}:8888/"
+     https_proxy: "https://{{ hostvars[groups['proxy'][0]].private_ip }}:8888/"
+  roles:
+     - role: gantsign.helm
+
 - name: Deploy RKE2
   hosts:
      - leaders
@@ -122,23 +133,14 @@
         - rke2-images-multus.linux-{{ rke2_architecture }}.tar.zst
         - rke2-images-calico.linux-{{ rke2_architecture }}.tar.zst
      rke2_download_kubeconf: true
-  roles:
-     - role: lablabs.rke2
-       when: not docker_ca_downloaded.failed
   tasks:
      - name: Create kubectl symlink
        ansible.builtin.file:
           src: /var/lib/rancher/rke2/bin/kubectl
           dest: /usr/local/bin/kubectl
           state: link
-
-- name: Install Helm
-  hosts:
-     - leaders
-     - workers
-  become: true
-  environment:
-     http_proxy: "http://{{ hostvars[groups['proxy'][0]].private_ip }}:8888/"
-     https_proxy: "https://{{ hostvars[groups['proxy'][0]].private_ip }}:8888/"
   roles:
-     - role: gantsign.helm
+     - role: lablabs.rke2
+       when: not docker_ca_downloaded.failed
+
+
