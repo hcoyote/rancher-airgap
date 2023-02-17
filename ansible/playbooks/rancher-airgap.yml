@@ -115,6 +115,7 @@
           src: /var/lib/rancher/rke2/bin/kubectl
           dest: /usr/local/bin/kubectl
           state: link
+          force: true
 
 - name: Deploy RKE2
   hosts:
